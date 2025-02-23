@@ -334,8 +334,6 @@ with st.sidebar:
 
 # 主界面内容
 if st.session_state.current_view == "input":
-    st.title("AI会议准备助手 📝")
-
     # 输入字段
     company_name = st.text_input("请输入公司名称:")
     meeting_objective = st.text_input("请输入会议目标:")
