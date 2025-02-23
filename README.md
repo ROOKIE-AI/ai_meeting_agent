@@ -1,10 +1,15 @@
-# 📝 AI会议准备助手
+# 📝 会议准备AI助手 [![Open in Streamlit][share_badge]][share_link]
 
-这是一个基于Streamlit开发的AI会议准备助手应用。它利用OpenAI的GPT模型和维基百科搜索功能，通过多个AI助手协同工作，为您生成全面的会议准备材料。
+[share_badge]: https://static.streamlit.io/badges/streamlit_badge_black_white.svg
+[share_link]: https://9yskzputwjappacugobfxwo.streamlit.app/
+
+这是一个基于Streamlit开发的会议准备AI助手应用。它利用OpenAI的GPT模型和维基百科搜索功能，通过多个AI助手协同工作，为您生成全面的会议准备材料。
+
+🔗 [在线演示](https://9yskzputwjappacugobfxwo.streamlit.app/) | [GitHub仓库](https://github.com/ROOKIE-AI/ai_meeting_agent)
 
 ## 📺 界面预览
 
-![AI会议准备助手界面](assets/interface_preview.png)
+![会议准备AI助手界面](assets/interface_preview.png)
 
 ### 🎯 界面特点
 

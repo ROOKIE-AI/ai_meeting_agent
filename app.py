@@ -1,6 +1,6 @@
 """
-AI会议准备助手应用
-这个模块实现了一个基于Streamlit的AI会议准备助手，利用OpenAI的GPT模型和维基百科搜索功能，
+会议准备AI助手应用
+这个模块实现了一个基于Streamlit的会议准备AI助手，利用OpenAI的GPT模型和维基百科搜索功能，
 生成全面的会议准备材料。系统通过多个AI助手协同工作，提供会议背景分析、
 行业趋势分析、会议策略制定和执行简报生成等多种功能。
 
@@ -41,8 +41,8 @@ class WikipediaToolWrapper:
             return f"搜索时发生错误: {str(e)}"
 
 # Streamlit 应用设置
-st.set_page_config(page_title="AI会议助手 📝", layout="wide")
-st.title("AI会议准备助手 📝")
+st.set_page_config(page_title="会议准备AI助手 📝", layout="wide")
+st.title("会议准备AI助手 📝")
 
 # 创建分析过程显示区域
 if 'analysis_log' not in st.session_state:
