@@ -14,6 +14,10 @@ Author: Rookie
 Date: 2025-02-20
 """
 
+__import__('pysqlite3')  
+import sys  
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 import streamlit as st
 from crewai import Agent, Task, Crew, LLM
 from crewai.process import Process

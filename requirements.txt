@@ -13,3 +13,4 @@ litellm
 tiktoken
 typing_extensions
 aiohttp
+pysqlite3-binary
