@@ -32,15 +32,6 @@ graph TD
     I --> L
     J --> L
     K --> L
-    
-    subgraph 实时反馈
-    M[进度展示] --> N[日志记录]
-    N --> O[状态更新]
-    end
-    
-    subgraph AI配置
-    P[模型选择] --> Q[参数调整]
-    Q --> R[API设置]
     end
 ```
 
