@@ -13,6 +13,8 @@
 
 ## 🔄 工作流程
 
+### 系统工作流程
+
 ```mermaid
 graph TD
     A[用户输入] --> B[信息预处理]
@@ -32,7 +34,58 @@ graph TD
     I --> L
     J --> L
     K --> L
-    end
+    
+```
+
+### 智能体决策流程
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant C as 控制器
+    participant BA as 背景分析专家
+    participant IA as 行业专家
+    participant SA as 策略专家
+    participant CA as 沟通专家
+    
+    U->>C: 提供会议信息
+    C->>BA: 分配背景分析任务
+    
+    activate BA
+    BA->>BA: 1. 分析公司信息
+    BA->>BA: 2. 研究最新动态
+    BA->>BA: 3. 识别关键信息
+    BA-->>C: 返回背景分析报告
+    deactivate BA
+    
+    C->>IA: 传递背景信息
+    
+    activate IA
+    IA->>IA: 1. 分析行业趋势
+    IA->>IA: 2. 评估市场机会
+    IA->>IA: 3. 竞争态势分析
+    IA-->>C: 返回行业分析报告
+    deactivate IA
+    
+    C->>SA: 提供分析结果
+    
+    activate SA
+    SA->>SA: 1. 制定会议策略
+    SA->>SA: 2. 设计议程安排
+    SA->>SA: 3. 分配时间节点
+    SA-->>C: 返回会议策略方案
+    deactivate SA
+    
+    C->>CA: 整合所有信息
+    
+    activate CA
+    CA->>CA: 1. 整合关键信息
+    CA->>CA: 2. 制作执行简报
+    CA->>CA: 3. 设计行动方案
+    CA-->>C: 返回最终简报
+    deactivate CA
+    
+    C->>U: 展示完整分析结果
 ```
 
 ### 核心工作流程说明：
