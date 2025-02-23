@@ -37,7 +37,7 @@
 
 1. 克隆项目代码：
 ```bash
-git clone [您的项目地址]
+git clone https://github.com/ROOKIE-AI/ai_meeting_agent.git
 cd ai_meeting_agent
 ```
 
