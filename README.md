@@ -18,23 +18,38 @@
 ```mermaid
 graph TD
     A[用户输入] --> B[信息预处理]
-    B --> C{AI助手团队}
     
-    C --> D[背景分析专家]
-    C --> E[行业专家]
-    C --> F[策略专家]
-    C --> G[沟通专家]
+    subgraph 文档处理
+    D1[上传文档] --> D2[文档解析]
+    D2 --> D3[信息提取]
+    D3 --> D4[知识整合]
+    end
     
-    D --> |公司信息分析| H[背景报告]
-    E --> |行业趋势分析| I[趋势报告]
-    F --> |策略制定| J[会议策略]
-    G --> |信息整合| K[执行简报]
+    B --> |基础信息| C{AI助手团队}
+    D4 --> |补充信息| C
     
-    H --> L[最终输出]
-    I --> L
-    J --> L
-    K --> L
+    C --> E[背景分析专家]
+    C --> F[行业专家]
+    C --> G[策略专家]
+    C --> H[沟通专家]
     
+    E --> |公司信息分析| I[背景报告]
+    F --> |行业趋势分析| J[趋势报告]
+    G --> |策略制定| K[会议策略]
+    H --> |信息整合| L[执行简报]
+    
+    I --> M[最终输出]
+    J --> M
+    K --> M
+    L --> M
+    
+    subgraph 支持文档类型
+    DOC[Word文档]
+    PDF[PDF文件]
+    PPT[PPT演示]
+    TXT[文本文件]
+    XLS[Excel表格]
+    end
 ```
 
 ### 智能体决策流程
@@ -42,13 +57,23 @@ graph TD
 ```mermaid
 sequenceDiagram
     participant U as 用户
+    participant D as 文档处理器
     participant C as 控制器
     participant BA as 背景分析专家
     participant IA as 行业专家
     participant SA as 策略专家
     participant CA as 沟通专家
     
+    U->>D: 上传相关文档
+    activate D
+    D->>D: 1. 文档解析
+    D->>D: 2. 文本提取
+    D->>D: 3. 知识整合
+    D-->>C: 返回结构化信息
+    deactivate D
+    
     U->>C: 提供会议信息
+    
     C->>BA: 分配背景分析任务
     
     activate BA
@@ -87,6 +112,50 @@ sequenceDiagram
     
     C->>U: 展示完整分析结果
 ```
+
+### 支持的文档类型
+
+1. **文本文档**
+   - Word文档 (.doc, .docx)
+   - PDF文件 (.pdf)
+   - 文本文件 (.txt)
+   - Markdown文件 (.md)
+
+2. **数据文件**
+   - Excel表格 (.xls, .xlsx)
+   - CSV文件 (.csv)
+   - JSON文件 (.json)
+
+3. **演示文稿**
+   - PowerPoint (.ppt, .pptx)
+   - Keynote (.key)
+
+4. **其他格式**
+   - 网页链接 (URL)
+   - 图片文件 (.jpg, .png)
+   - 压缩文件 (.zip, .rar)
+
+### 文档处理流程
+
+1. **文档上传**
+   - 支持批量上传
+   - 文件格式验证
+   - 大小限制检查
+
+2. **内容提取**
+   - 文本识别与提取
+   - 表格数据解析
+   - 图片信息提取
+
+3. **信息整合**
+   - 关键信息提取
+   - 知识点归类
+   - 上下文关联
+
+4. **智能分析**
+   - 文本语义分析
+   - 数据趋势分析
+   - 关键信息突出
 
 ### 核心工作流程说明：
 

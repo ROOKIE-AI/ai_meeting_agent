@@ -9,6 +9,7 @@
     - 实时分析进度展示
     - 中文维基百科集成
     - 可配置的AI模型参数
+    - 文档智能处理分析
 
 Author: Rookie
 Date: 2025-02-20
@@ -23,9 +24,116 @@ from crewai import Agent, Task, Crew, LLM
 from crewai.process import Process
 from langchain_community.tools import WikipediaQueryRun
 from langchain_community.utilities import WikipediaAPIWrapper
-from typing import Any
+from typing import Any, List, Dict
 import os
 from datetime import datetime
+import docx
+import pandas as pd
+import PyPDF2
+import io
+from PIL import Image
+import pytesseract
+import json
+import zipfile
+import requests
+from bs4 import BeautifulSoup
+
+class DocumentProcessor:
+    """文档处理器类，用于处理各种类型的文档并提取信息。"""
+    
+    def __init__(self):
+        """初始化文档处理器"""
+        self.supported_extensions = {
+            'text': ['.txt', '.md'],
+            'document': ['.doc', '.docx'],
+            'spreadsheet': ['.xls', '.xlsx', '.csv'],
+            'presentation': ['.ppt', '.pptx'],
+            'pdf': ['.pdf'],
+            'image': ['.jpg', '.jpeg', '.png'],
+            'archive': ['.zip', '.rar']
+        }
+    
+    def validate_file(self, file) -> bool:
+        """验证文件格式是否支持"""
+        if not file:
+            return False
+        ext = os.path.splitext(file.name)[1].lower()
+        return any(ext in exts for exts in self.supported_extensions.values())
+    
+    def extract_text_from_docx(self, file) -> str:
+        """从Word文档中提取文本"""
+        doc = docx.Document(file)
+        return '\n'.join([paragraph.text for paragraph in doc.paragraphs])
+    
+    def extract_text_from_pdf(self, file) -> str:
+        """从PDF文件中提取文本"""
+        pdf_reader = PyPDF2.PdfReader(file)
+        return '\n'.join([page.extract_text() for page in pdf_reader.pages])
+    
+    def extract_text_from_image(self, file) -> str:
+        """从图片中提取文本"""
+        image = Image.open(file)
+        return pytesseract.image_to_string(image, lang='chi_sim+eng')
+    
+    def extract_data_from_excel(self, file) -> Dict:
+        """从Excel文件中提取数据"""
+        df = pd.read_excel(file)
+        return {
+            'headers': df.columns.tolist(),
+            'data': df.values.tolist(),
+            'summary': df.describe().to_dict()
+        }
+    
+    def extract_from_url(self, url: str) -> str:
+        """从URL中提取内容"""
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        return soup.get_text()
+    
+    def process_file(self, file) -> Dict:
+        """处理上传的文件并提取信息"""
+        try:
+            file_ext = os.path.splitext(file.name)[1].lower()
+            content = ''
+            
+            if file_ext in self.supported_extensions['document']:
+                content = self.extract_text_from_docx(file)
+            elif file_ext in self.supported_extensions['pdf']:
+                content = self.extract_text_from_pdf(file)
+            elif file_ext in self.supported_extensions['text']:
+                content = file.getvalue().decode('utf-8')
+            elif file_ext in self.supported_extensions['image']:
+                content = self.extract_text_from_image(file)
+            elif file_ext in self.supported_extensions['spreadsheet']:
+                content = json.dumps(self.extract_data_from_excel(file))
+            
+            return {
+                'filename': file.name,
+                'content': content,
+                'type': file_ext,
+                'size': file.size,
+                'timestamp': datetime.now().isoformat()
+            }
+        except Exception as e:
+            return {
+                'filename': file.name,
+                'error': str(e),
+                'type': file_ext,
+                'size': file.size,
+                'timestamp': datetime.now().isoformat()
+            }
+
+# 添加文档处理器到session_state
+if 'doc_processor' not in st.session_state:
+    st.session_state.doc_processor = DocumentProcessor()
+
+# 添加文档存储到session_state
+if 'uploaded_docs' not in st.session_state:
+    st.session_state.uploaded_docs = []
+
+# 添加文档分析结果到session_state
+if 'doc_analysis' not in st.session_state:
+    st.session_state.doc_analysis = {}
 
 # 添加工具包装类
 class WikipediaToolWrapper:
@@ -334,6 +442,94 @@ with st.sidebar:
 
 # 主界面内容
 if st.session_state.current_view == "input":
+    # 文档上传和URL输入区域
+    doc_col1, doc_col2 = st.columns([2, 1])
+    
+    with doc_col1:
+        st.header("📄 上传相关文档")
+        col1, col2 = st.columns([4, 1])
+        with col1:
+            uploaded_files = st.file_uploader(
+                "支持Word、PDF、Excel、图片等多种格式",
+                accept_multiple_files=True,
+                type=list(sum([exts for exts in st.session_state.doc_processor.supported_extensions.values()], []))
+            )
+        with col2:
+            if st.button("🗑️ 清空", use_container_width=True):
+                st.session_state.uploaded_docs = []
+                st.rerun()
+    
+    with doc_col2:
+        st.header("🔗 输入网页链接")
+        url = st.text_input("输入相关网页URL")
+        if url and st.button("获取内容", use_container_width=True):
+            with st.spinner("正在获取网页内容..."):
+                try:
+                    content = st.session_state.doc_processor.extract_from_url(url)
+                    doc_info = {
+                        'filename': url,
+                        'content': content,
+                        'type': 'url',
+                        'size': len(content),
+                        'timestamp': datetime.now().isoformat()
+                    }
+                    # 检查URL是否已存在
+                    if not any(doc['filename'] == url for doc in st.session_state.uploaded_docs):
+                        st.session_state.uploaded_docs.append(doc_info)
+                        st.success("✅ 已获取网页内容")
+                    else:
+                        st.warning("⚠️ 该网页已添加")
+                except Exception as e:
+                    st.error(f"❌ 获取失败：{str(e)}")
+    
+    # 处理上传的文档
+    if uploaded_files:
+        with st.spinner("正在处理文档..."):
+            for file in uploaded_files:
+                # 检查文件是否已存在
+                if any(doc['filename'] == file.name for doc in st.session_state.uploaded_docs):
+                    st.warning(f"⚠️ {file.name} 已存在，跳过处理")
+                    continue
+                
+                if st.session_state.doc_processor.validate_file(file):
+                    doc_info = st.session_state.doc_processor.process_file(file)
+                    if 'error' not in doc_info:
+                        st.session_state.uploaded_docs.append(doc_info)
+                        st.success(f"✅ 已处理：{file.name}")
+                    else:
+                        st.error(f"❌ 处理失败 {file.name}：{doc_info['error']}")
+                else:
+                    st.warning(f"⚠️ 不支持的格式：{file.name}")
+    
+    # 显示已上传的文档列表
+    if st.session_state.uploaded_docs:
+        st.subheader("📚 已上传的资料")
+        for i, doc in enumerate(st.session_state.uploaded_docs):
+            with st.expander(f"{'🌐' if doc['type'] == 'url' else '📄'} {doc['filename']}", expanded=False):
+                col1, col2, col3 = st.columns([1, 3, 1])
+                with col1:
+                    st.text("类型")
+                    st.text("大小")
+                    st.text("时间")
+                with col2:
+                    st.text(f": {doc['type']}")
+                    st.text(f": {doc['size']} bytes")
+                    st.text(f": {datetime.fromisoformat(doc['timestamp']).strftime('%Y-%m-%d %H:%M')}")
+                with col3:
+                    if st.button("🗑️", key=f"del_{i}", help="删除此文档"):
+                        st.session_state.uploaded_docs.pop(i)
+                        st.rerun()
+                
+                preview = doc['content'][:500] + "..." if len(doc['content']) > 500 else doc['content']
+                st.text_area(
+                    "内容预览",
+                    preview,
+                    height=100,
+                    key=f"doc_{i}_{doc['timestamp']}"
+                )
+    
+    st.divider()
+    
     # 输入字段
     company_name = st.text_input("请输入公司名称:")
     meeting_objective = st.text_input("请输入会议目标:")
@@ -375,7 +571,9 @@ if st.session_state.current_view == "input":
                     context_analyzer = LoggingAgent(
                         role='会议背景分析专家',
                         goal='分析和总结会议的关键背景信息',
-                        backstory='你是一位擅长快速理解复杂商业背景并识别关键信息的专家。' + ('你会使用中文维基百科进行搜索和研究。' if wiki_tool else ''),
+                        backstory='你是一位擅长快速理解复杂商业背景并识别关键信息的专家。' + 
+                                 '你会分析提供的文档资料，并' + 
+                                 ('使用中文维基百科进行搜索和研究。' if wiki_tool else '进行深入研究。'),
                         verbose=True,
                         allow_delegation=False,
                         llm=llm,
@@ -411,6 +609,12 @@ if st.session_state.current_view == "input":
                     )
 
                     # 定义任务
+                    docs_info = st.session_state.uploaded_docs if st.session_state.uploaded_docs else []
+                    docs_context = "\n\n相关文档资料：\n" + "\n".join([
+                        f"文档{i+1}. {doc['filename']}:\n{doc['content'][:1000]}..."
+                        for i, doc in enumerate(docs_info)
+                    ]) if docs_info else ""
+                    
                     context_analysis_task = Task(
                         description=f"""
                         分析与{company_name}会议相关的背景，考虑以下方面：
@@ -418,6 +622,8 @@ if st.session_state.current_view == "input":
                         2. 参会人员：{attendees}
                         3. 会议时长：{meeting_duration}分钟
                         4. 特别关注领域或问题：{focus_areas}
+                        
+                        {docs_context}
 
                         深入研究{company_name}，包括：
                         1. 最新新闻和新闻发布
